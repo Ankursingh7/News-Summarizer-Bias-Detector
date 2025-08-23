@@ -1,26 +1,23 @@
 {
-  "name": "news-bias-analyzer",
-  "version": "1.0.0",
+  "name": "copy-of-copy-of-news-bias-analyzer",
   "private": true,
+  "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview",
-    "netlify:dev": "netlify dev",
-    "serve": "netlify dev"
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "framer-motion": "^11.3.31"
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "@google/genai": "^1.15.0",
+    "framer-motion": "^12.23.12",
+    "@netlify/functions": "^4.2.2"
   },
   "devDependencies": {
-    "@types/react": "^18.3.5",
-    "@types/react-dom": "^18.3.0",
-    "typescript": "^5.6.2",
-    "vite": "^5.4.5",
-    "@vitejs/plugin-react": "^4.3.1",
-    "esbuild": "^0.23.1"
+    "@types/node": "^22.14.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
   }
 }
