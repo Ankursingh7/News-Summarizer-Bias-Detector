@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 
 interface URLInputFormProps {
@@ -7,6 +7,8 @@ interface URLInputFormProps {
   isLoading: boolean;
   selectedLanguage: string;
   onLanguageChange: (language: string) => void;
+  url: string;
+  onUrlChange: (url: string) => void;
 }
 
 const languages = [
@@ -26,8 +28,7 @@ const languages = [
     'Chinese (Simplified)'
 ];
 
-const URLInputForm: React.FC<URLInputFormProps> = ({ onSubmit, isLoading, selectedLanguage, onLanguageChange }) => {
-  const [url, setUrl] = useState('');
+const URLInputForm: React.FC<URLInputFormProps> = ({ onSubmit, isLoading, selectedLanguage, onLanguageChange, url, onUrlChange }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,7 +64,7 @@ const URLInputForm: React.FC<URLInputFormProps> = ({ onSubmit, isLoading, select
             <input
                 type="url"
                 value={url}
-                onChange={(e) => setUrl(e.target.value)}
+                onChange={(e) => onUrlChange(e.target.value)}
                 placeholder="https://example.com/news/article"
                 className="w-full h-12 pl-12 pr-4 text-gray-700 bg-gray-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                 required

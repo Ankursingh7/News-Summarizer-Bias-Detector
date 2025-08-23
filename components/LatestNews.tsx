@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchLatestNews, translateTexts } from '../services/geminiService';
@@ -7,9 +8,10 @@ const englishCategories = ['Political', 'International', 'Indian'];
 
 interface LatestNewsProps {
     language: string;
+    onAnalyzeUrl: (url: string) => void;
 }
 
-const LatestNews: React.FC<LatestNewsProps> = ({ language }) => {
+const LatestNews: React.FC<LatestNewsProps> = ({ language, onAnalyzeUrl }) => {
     const [activeCategory, setActiveCategory] = useState<string>('Political');
     const [headlines, setHeadlines] = useState<NewsHeadline[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -119,7 +121,7 @@ const LatestNews: React.FC<LatestNewsProps> = ({ language }) => {
               </motion.div>
             )}
 
-            <div className="space-y-5 min-h-[290px]">
+            <div className="space-y-3 min-h-[290px]">
                 <AnimatePresence mode="wait">
                     {isLoading ? (
                         <motion.div
@@ -149,23 +151,36 @@ const LatestNews: React.FC<LatestNewsProps> = ({ language }) => {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3 }}
+                             className="space-y-2"
                         >
                             {headlines.map((headline, index) => (
-                                <motion.a
+                                <motion.div
                                     key={headline.url}
-                                    href={headline.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
                                     initial={{ opacity: 0, x: -10 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     transition={{ delay: index * 0.07, duration: 0.3 }}
-                                    className="block p-3 rounded-lg hover:bg-indigo-50 transition-all duration-200 group hover:translate-x-1"
+                                    className="flex items-center justify-between p-3 rounded-lg hover:bg-indigo-50 transition-colors duration-200 group"
                                 >
-                                    <h3 className="font-semibold text-gray-800 group-hover:text-indigo-600">
-                                        {headline.title}
-                                    </h3>
-                                    <p className="text-sm text-gray-500 mt-1">{headline.source}</p>
-                                </motion.a>
+                                    <a
+                                        href={headline.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="block flex-grow mr-4 group-hover:translate-x-1 transition-transform duration-200"
+                                    >
+                                        <h3 className="font-semibold text-gray-800 group-hover:text-indigo-600">
+                                            {headline.title}
+                                        </h3>
+                                        <p className="text-sm text-gray-500 mt-1">{headline.source}</p>
+                                    </a>
+                                    <motion.button
+                                        onClick={() => onAnalyzeUrl(headline.url)}
+                                        className="flex-shrink-0 px-3 py-1 text-sm font-semibold text-indigo-600 bg-indigo-100 rounded-full hover:bg-indigo-200 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                                        aria-label={`Analyze article: ${headline.title}`}
+                                        whileTap={{ scale: 0.95 }}
+                                    >
+                                        Analyze
+                                    </motion.button>
+                                </motion.div>
                             ))}
                         </motion.div>
                     )}

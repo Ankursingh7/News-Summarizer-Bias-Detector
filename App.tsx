@@ -18,6 +18,7 @@ const App: React.FC = () => {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [activeHistoryId, setActiveHistoryId] = useState<string | null>(null);
   const [language, setLanguage] = useState<string>('English');
+  const [inputUrl, setInputUrl] = useState<string>('');
 
   // Load history from localStorage on initial render
   useEffect(() => {
@@ -45,6 +46,8 @@ const App: React.FC = () => {
   }, [history]);
 
   const handleUrlSubmit = useCallback(async (url: string) => {
+    if (!url.trim()) return;
+    
     setIsLoading(true);
     setError(null);
     setAnalysisResult(null);
@@ -82,6 +85,12 @@ const App: React.FC = () => {
       setIsLoading(false);
     }
   }, [history, language]);
+  
+  const handleAnalyzeRequest = useCallback((url: string) => {
+    setInputUrl(url);
+    handleUrlSubmit(url);
+  }, [handleUrlSubmit]);
+
 
   const handleSelectHistoryItem = useCallback((id: string) => {
     const item = history.find(h => h.id === id);
@@ -90,6 +99,7 @@ const App: React.FC = () => {
         setError(null);
         setAnalysisResult(item.analysis);
         setActiveHistoryId(item.id);
+        setInputUrl(item.url);
     }
   }, [history]);
 
@@ -169,6 +179,8 @@ const App: React.FC = () => {
                         isLoading={isLoading}
                         selectedLanguage={language}
                         onLanguageChange={setLanguage}
+                        url={inputUrl}
+                        onUrlChange={setInputUrl}
                     />
 
                     <div className="mt-8">
@@ -185,7 +197,7 @@ const App: React.FC = () => {
                                 currentLanguage={language}
                             />
                           ) : (
-                            <LatestNews language={language} />
+                            <LatestNews language={language} onAnalyzeUrl={handleAnalyzeRequest} />
                           )}
                         </AnimatePresence>
                     </div>
