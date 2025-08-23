@@ -53,17 +53,27 @@ export const translateTexts = async (texts: string[], targetLanguage: string): P
     }
 };
 
-export const fetchLatestNews = async (category: string): Promise<NewsHeadline[]> => {
+export const fetchLatestNews = async (category: string): Promise<{ headlines: NewsHeadline[], source: 'live' | 'mock' }> => {
   try {
     const news = await apiCall<NewsHeadline[]>('fetchNews', { category });
     if (Array.isArray(news)) {
-        return news;
+        return { headlines: news, source: 'live' };
     }
     console.warn("API for fetch news did not return an array:", news);
-    return [];
+    return { headlines: [], source: 'live' };
   } catch (error) {
-    console.error("Error fetching latest news:", error);
-    // Return empty array on failure so the UI can handle it gracefully.
-    return [];
+    console.error("Error fetching latest news, attempting fallback:", error);
+    try {
+        const response = await fetch('/api/news');
+        if (!response.ok) {
+            console.error(`Fallback request to /api/news failed with status: ${response.status}`);
+            return { headlines: [], source: 'live' }; // Indicate live source on complete failure
+        }
+        const mockNews = await response.json() as NewsHeadline[];
+        return { headlines: mockNews, source: 'mock' };
+    } catch (fallbackError) {
+        console.error("Error fetching fallback news:", fallbackError);
+        return { headlines: [], source: 'live' }; // Final failure
+    }
   }
 };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { fetchLatestNews, translateTexts } from '../services/geminiService';
@@ -15,6 +14,7 @@ const LatestNews: React.FC<LatestNewsProps> = ({ language }) => {
     const [headlines, setHeadlines] = useState<NewsHeadline[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
+    const [isFallback, setIsFallback] = useState<boolean>(false);
     const [translatedCategories, setTranslatedCategories] = useState<Record<string, string>>(() => 
         englishCategories.reduce((acc, cat) => ({ ...acc, [cat]: cat }), {})
     );
@@ -43,12 +43,18 @@ const LatestNews: React.FC<LatestNewsProps> = ({ language }) => {
             try {
                 setIsLoading(true);
                 setError(null);
-                const news = await fetchLatestNews(activeCategory);
+                setIsFallback(false); // Reset on each fetch
+
+                const { headlines: news, source } = await fetchLatestNews(activeCategory);
+                
                 if (news.length === 0) {
                     const categoryName = translatedCategories[activeCategory]?.toLowerCase() || activeCategory.toLowerCase();
                     setError(`Could not fetch recent ${categoryName} news at this time.`);
                 } else {
                     setHeadlines(news);
+                    if (source === 'mock') {
+                        setIsFallback(true);
+                    }
                 }
             } catch (err) {
                 setError("An error occurred while fetching news.");
@@ -102,6 +108,16 @@ const LatestNews: React.FC<LatestNewsProps> = ({ language }) => {
                 </button>
               ))}
             </div>
+
+            {isFallback && !isLoading && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4 p-3 text-sm text-center text-amber-800 bg-amber-100 border border-amber-200 rounded-lg"
+              >
+                Live headlines are currently unavailable. Showing sample news.
+              </motion.div>
+            )}
 
             <div className="space-y-5 min-h-[290px]">
                 <AnimatePresence mode="wait">

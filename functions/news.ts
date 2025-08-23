@@ -1,19 +1,19 @@
 import type { Handler } from "@netlify/functions";
+import type { NewsHeadline } from '../types';
 
 const handler: Handler = async () => {
-  // Temporary static response for testing
-  const fakeNews = [
-    { title: "Government introduces new economic policy", source: "BBC", bias: "Neutral" },
-    { title: "Opposition criticizes ruling party decisions", source: "CNN", bias: "Slightly Negative" },
-    { title: "Stock markets reach record highs", source: "Reuters", bias: "Positive" },
+  const fakeNews: NewsHeadline[] = [
+    { title: "Global Summit Addresses Climate Change Urgently", source: "Associated Press", url: "#" },
+    { title: "New Breakthrough in AI Could Revolutionize Medicine", source: "Reuters", url: "#" },
+    { title: "Stock Markets React to New Economic Policies", source: "The Wall Street Journal", url: "#" },
+    { title: "Archaeologists Uncover Lost City in the Amazon", source: "National Geographic", url: "#" },
+    { title: "Space Mission Successfully Launches to Explore Jupiter's Moons", source: "BBC News", url: "#" },
   ];
 
   return {
     statusCode: 200,
-    body: JSON.stringify({
-      success: true,
-      articles: fakeNews,
-    }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(fakeNews),
   };
 };
 
