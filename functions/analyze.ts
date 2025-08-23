@@ -56,40 +56,54 @@ const analysisSchema = {
 
 const analyzeArticle = async (articleUrl: string, language: string): Promise<AnalysisResult> => {
     const prompt = `
-    You are an expert news analyst. Please analyze the article at the following URL: ${articleUrl}
-    Your task is to provide the article's title, THREE different summaries, and a detailed, evidence-based bias analysis.
-    1.  **Article Title**: Provide the original title of the article.
+    You are an expert news analyst. Your task is to analyze the content of the article found at the provided URL and produce a detailed report.
+    URL: ${articleUrl}
+
+    Based on the content of the article at the URL, provide the following in a single JSON object:
+    1.  **articleTitle**: The original title of the article.
     2.  **Summaries**:
-        *   **neutralSummary**: A 'Neutral Summary'. This should be an objective and balanced overview of the article's main points.
-        *   **factOnlySummary**: A 'Fact-Only' summary. List only the verifiable facts presented in the article without interpretation, context, or narrative flow.
-        *   **eli10Summary**: An 'Explain Like I'm 10' summary. Use very simple, child-friendly language to explain the main points of the article.
-    3.  **Bias Analysis**: Perform a thorough analysis of potential bias in the article. For each of the following points, provide a 'finding' with your analysis and an 'evidence' array containing direct quotes from the article that support your finding. If no direct quotes apply, provide an empty array for 'evidence'.
-        *   **Tone**: What is the overall tone? Critically, the value for the 'classification' field MUST be one of the following exact English strings: 'Positive', 'Negative', or 'Neutral'. The 'finding' and 'evidence' for the tone should be in the requested language.
-        *   **Favoritism**: Does the article favor or criticize any side?
-        *   **Charged Language**: Are there emotionally charged words?
-        *   **Missing Perspectives**: Are there any significant perspectives missing?
-        *   **Political Leaning**: Does the article show a political leaning (e.g., left, right, center, or leaning towards a specific party/ideology)?
-    **VERY IMPORTANT**: Your entire response, including all summaries and bias analysis findings, MUST be in the following language: **${language}**. The only exception is the 'classification' field for Tone, which must remain in English.
-    Provide your entire response as a single JSON object that conforms to the provided schema.
+        *   **neutralSummary**: An objective and balanced overview.
+        *   **factOnlySummary**: A list of verifiable facts without interpretation.
+        *   **eli10Summary**: An 'Explain Like I'm 10' summary.
+    3.  **Bias Analysis**: A detailed, evidence-based analysis. For each point, provide a 'finding' and an 'evidence' array of direct quotes.
+        *   **Tone**: Overall tone. 'classification' MUST be 'Positive', 'Negative', or 'Neutral' (in English).
+        *   **Favoritism**: Does it favor or criticize any side?
+        *   **Charged Language**: Use of emotionally charged words.
+        *   **Missing Perspectives**: Significant missing perspectives.
+        *   **Political Leaning**: Any political leaning (left, right, center, etc.).
+
+    **LANGUAGE REQUIREMENT**: The entire JSON response, including all summaries and findings, MUST be in **${language}**. The only exception is the 'classification' field for Tone.
+
+    **OUTPUT FORMAT**: Your entire response must be ONLY the JSON object. Do not include any markdown formatting like \`\`\`json or any other explanatory text.
   `;
 
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
     contents: prompt,
     config: {
-      responseMimeType: "application/json",
-      responseSchema: analysisSchema,
+      tools: [{ googleSearch: {} }],
       temperature: 0.2,
     },
   });
 
-  const text = response.text.trim();
-  const parsedJson = JSON.parse(text);
-  
-  if (parsedJson.articleTitle && parsedJson.neutralSummary && parsedJson.biasAnalysis) {
-      return parsedJson as AnalysisResult;
-  } else {
-      throw new Error("Invalid JSON structure received from API for article analysis.");
+  let text = response.text.trim();
+  if (text.startsWith('```json')) {
+      text = text.substring(7, text.length - 3).trim();
+  } else if (text.startsWith('```')) {
+      text = text.substring(3, text.length - 3).trim();
+  }
+
+  try {
+      const parsedJson = JSON.parse(text);
+      if (parsedJson.articleTitle && parsedJson.neutralSummary && parsedJson.biasAnalysis) {
+          return parsedJson as AnalysisResult;
+      } else {
+          console.error("Parsed JSON missing required fields:", parsedJson);
+          throw new Error("Invalid JSON structure received from API for article analysis.");
+      }
+  } catch (e) {
+      console.error("Failed to parse JSON from Gemini response:", text);
+      throw new Error("Could not parse the analysis from the AI model.");
   }
 };
 
