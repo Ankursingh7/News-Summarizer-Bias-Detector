@@ -4,11 +4,24 @@ import type { AnalysisResult, NewsHeadline } from '../types';
 // Note: The application has been converted to make direct client-side API calls.
 // The /api and /functions directories are no longer used and can be safely deleted.
 
-if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable not set. Please ensure it is available in your environment.");
-}
+let ai: GoogleGenAI | null = null;
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+/**
+ * Lazily initializes and returns the GoogleGenAI client instance.
+ * Throws an error if the API key is not configured.
+ */
+const getAiClient = (): GoogleGenAI => {
+    if (ai) {
+        return ai;
+    }
+
+    if (!process.env.API_KEY) {
+        throw new Error("API_KEY environment variable not set. Please ensure it is available in your environment.");
+    }
+    
+    ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    return ai;
+};
 
 
 // --- SCHEMAS (for JSON responses) ---
@@ -61,6 +74,7 @@ const analysisSchema = {
  * @returns The main text content of the article.
  */
 const getArticleContent = async (articleUrl: string): Promise<string> => {
+    const aiClient = getAiClient();
     const prompt = `
         Please extract and return ONLY the main text content of the news article at the following URL.
         Do not include any ads, navigation links, comments, or boilerplate text from the website's template.
@@ -68,7 +82,7 @@ const getArticleContent = async (articleUrl: string): Promise<string> => {
         URL: ${articleUrl}
     `;
     try {
-        const response = await ai.models.generateContent({
+        const response = await aiClient.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
             config: {
@@ -93,6 +107,7 @@ export const analyzeNewsArticle = async (articleUrl: string, language: string): 
     }
 
     // Step 2: Analyze the fetched content using JSON mode for a reliable structure.
+    const aiClient = getAiClient();
     const analysisPrompt = `
     You are an expert news analyst. Your task is to analyze the content of the article provided below and produce a detailed report.
     
@@ -118,7 +133,7 @@ export const analyzeNewsArticle = async (articleUrl: string, language: string): 
   `;
 
     try {
-        const response = await ai.models.generateContent({
+        const response = await aiClient.models.generateContent({
             model: "gemini-2.5-flash",
             contents: analysisPrompt,
             config: {
@@ -148,6 +163,7 @@ export const analyzeNewsArticle = async (articleUrl: string, language: string): 
 };
 
 export const translateAnalysisResult = async (analysis: AnalysisResult, targetLanguage: string): Promise<AnalysisResult> => {
+    const aiClient = getAiClient();
     const prompt = `
       You are an expert translator. Your task is to translate the user-facing text content of the following JSON object into the specified target language.
       Target Language: **${targetLanguage}**
@@ -161,7 +177,7 @@ export const translateAnalysisResult = async (analysis: AnalysisResult, targetLa
     `;
     
     try {
-        const response = await ai.models.generateContent({
+        const response = await aiClient.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
             config: {
@@ -181,6 +197,7 @@ export const translateAnalysisResult = async (analysis: AnalysisResult, targetLa
 };
 
 export const translateTexts = async (texts: string[], targetLanguage: string): Promise<Record<string, string>> => {
+    const aiClient = getAiClient();
     const prompt = `
       Translate the following English words into ${targetLanguage}.
       Provide the response as a single JSON object where keys are the original English words and values are their translations.
@@ -197,7 +214,7 @@ export const translateTexts = async (texts: string[], targetLanguage: string): P
     };
 
     try {
-        const response = await ai.models.generateContent({
+        const response = await aiClient.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
             config: {
@@ -218,6 +235,7 @@ export const translateTexts = async (texts: string[], targetLanguage: string): P
 };
 
 export const fetchLatestNews = async (category: string): Promise<{ headlines: NewsHeadline[], source: 'live' | 'mock' }> => {
+    const aiClient = getAiClient();
     const prompt = `
     List 5 recent and significant ${category} news headlines from reputable, major news sources.
     For each headline, provide:
@@ -229,7 +247,7 @@ export const fetchLatestNews = async (category: string): Promise<{ headlines: Ne
   `;
 
   try {
-      const response = await ai.models.generateContent({
+      const response = await aiClient.models.generateContent({
           model: "gemini-2.5-flash",
           contents: prompt,
           config: {
