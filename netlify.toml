@@ -1,15 +1,15 @@
 [build]
   command = "npm run build"
   publish = "dist"
-  functions = "netlify/functions"   # folder for Netlify serverless functions
+  functions = "netlify/functions"   # Folder for Netlify serverless functions
 
-# Handle SPA routing (React Router, Vite, etc.)
+# 🔹 Fix blank screen for React Router / SPA apps
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-# Example function redirect (optional)
+# 🔹 Redirect API requests to serverless functions
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/:splat"
