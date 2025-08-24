@@ -1,9 +1,17 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  functions = "netlify/functions"   # folder for Netlify serverless functions
 
-# Handle SPA routing (React Router etc.)
+# Handle SPA routing (React Router, Vite, etc.)
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Example function redirect (optional)
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
